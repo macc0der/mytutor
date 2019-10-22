@@ -10,7 +10,7 @@ const i18n = require('i18next');
 const languageStrings = require('./languageStrings');
 
 var AWS = require('aws-sdk');
-AWS.config.update({region: 'us-east-1'});
+AWS.config.update({ region: 'us-east-1' });
 var dynamodb = new AWS.DynamoDB();
 
 // Date params for Dynamo
@@ -23,7 +23,7 @@ var timespan = (n - 20000).toString();
 
 // Params for Dynamo
 
-var m =[];
+var m = [];
 // If you want to select all records
 /*
 var params = {
@@ -39,17 +39,17 @@ var params = {
 */
 var params = {
     ExpressionAttributeValues: {
-     ":v1": {
-       S: "test"
-      },
-      ":v2":{
-          S: timespan
-      }
+        ":v1": {
+            S: "test"
+        },
+        ":v2": {
+            S: timespan
+        }
     },
     KeyConditionExpression: "A11yHack_UserId = :v1 and A11yHack_timeStampRecord >= :v2",
     ProjectionExpression: "texts",
     TableName: "A11yHack"
-   };
+};
 
 //Dynamo Function
 /*
@@ -98,9 +98,9 @@ function genCharArray(charA, charZ) {
 }
 const letter = genCharArray('a', 'z');
 
-function sleep(ms){
-    return new Promise(resolve=>{
-        setTimeout(resolve,ms)
+function sleep(ms) {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms)
     })
 }
 
@@ -127,44 +127,44 @@ const SelectGameIntentHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'SelectGame';
     },
-   async handle(handlerInput) {
+    async handle(handlerInput) {
         //const speakOutput = handlerInput.t('HELLO_MSG');
-         const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-         var attributes = handlerInput.attributesManager.getSessionAttributes();
-         const request = handlerInput.requestEnvelope.request;
+        const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
+        var attributes = handlerInput.attributesManager.getSessionAttributes();
+        const request = handlerInput.requestEnvelope.request;
         var gameType = request.intent.slots['gameType'].resolutions.resolutionsPerAuthority[0] ? request.intent.slots['gameType'].resolutions.resolutionsPerAuthority[0].values[0].value.name : null;
         //callDynamo(handlerInput);
-       // await sleep(2000);
+        // await sleep(2000);
 
 
 
-        if (gameType === 'numbers'){
+        if (gameType === 'numbers') {
 
             const speakOutput = handlerInput.t('WELCOME_NUMBER');
             var rand_number = Math.floor(Math.random() * Math.floor(10));
-            const final_speech = speakOutput+ " "+ rand_number+'<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
+            const final_speech = speakOutput + " " + rand_number + '<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
             const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
             var attributes = handlerInput.attributesManager.getSessionAttributes();
 
             attributes.rand_number = rand_number;
-             handlerInput.attributesManager.setSessionAttributes(attributes);
+            handlerInput.attributesManager.setSessionAttributes(attributes);
 
-                    return handlerInput.responseBuilder
-                        .speak(final_speech)
-                        //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
-                        .getResponse();
+            return handlerInput.responseBuilder
+                .speak(final_speech)
+                //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+                .getResponse();
 
         }
 
-        else if (gameType === 'alphabets'){
+        else if (gameType === 'alphabets') {
 
-           const speakOutput = handlerInput.t('WELCOME_ALPHA');
-           var rand_letter = letter[Math.floor(Math.random() * letter.length)]+'.';
-           attributes.rand_letter = rand_letter
-           const final_speech = speakOutput+ ' '+ rand_letter+'<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
+            const speakOutput = handlerInput.t('WELCOME_ALPHA');
+            var rand_letter = letter[Math.floor(Math.random() * letter.length)] + '.';
+            attributes.rand_letter = rand_letter
+            const final_speech = speakOutput + ' ' + rand_letter + '<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
 
             handlerInput.attributesManager.setSessionAttributes(attributes);
-              return handlerInput.responseBuilder
+            return handlerInput.responseBuilder
                 .speak(final_speech)
                 //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
                 .getResponse();
@@ -175,10 +175,10 @@ const SelectGameIntentHandler = {
             const speakOutput = handlerInput.t('ERROR_MSG');
 
 
-             return handlerInput.responseBuilder
-               .speak(speakOutput)
-               //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
-               .getResponse();
+            return handlerInput.responseBuilder
+                .speak(speakOutput)
+                //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+                .getResponse();
         }
 
 
@@ -186,104 +186,111 @@ const SelectGameIntentHandler = {
     }
 };
 
+ function getResultsFromDB() {
+    return new Promise(((resolve, reject) => {
+        dynamodb.query(params, function (err, data) {
+            if (err) {
+                console.log(err, err.stack);
+                reject(err);
+            }// an error occurred
+            else {
+                //console.log("data from dynamo "+data.Items)
+                let array = data.Items;
+                console.log(array);
+                var l = [];
+                array.forEach(function (item, index) {
+                    l.push(item.texts.L[0]);
+                });
+
+                var filtered = l.filter(function (el) {
+                    return el != null;
+                });
+
+                console.log(filtered);
+
+                var m= [];
+
+                filtered.forEach(function (item, index) {
+                    //console.log("push output "+item.S)
+                    m.push(item.S)
+
+                });
+
+                console.log(m);
+
+                resolve(m);
+            }
+           
+
+        })
+       
+    }))
+};
+
 const ReadyPlayIntentHandler = {
-     canHandle(handlerInput) {
+    canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ReadyPlay';
     },
-   async handle(handlerInput) {
+    async handle(handlerInput) {
 
-           dynamodb.query(params, function(err, data) {
-                    if (err) console.log(err, err.stack); // an error occurred
-                    else {
-                    //console.log("data from dynamo "+data.Items)
-                       let array = data.Items;
-                       var l =[];
-                                   array.forEach(function (item, index) {
-                                     l.push(item.texts.L[0]);
-                                               });
+        var list = await getResultsFromDB();
 
-                       var filtered = l.filter(function (el) {
-                                       return el != null;
-                                     });
+        var attributes = handlerInput.attributesManager.getSessionAttributes();
+        var flag = 'false';
+        console.log(attributes);
+       
+        console.log("results-->" + list);
+        var rand_number = attributes.rand_number;
+        var rand_letter = attributes.rand_letter;
 
-                                   filtered.forEach(function (item, index) {
-                                           //console.log("push output "+item.S)
-                                           m.push(item.S)
-
-                                           });
-
-                               const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-                               var attributes = handlerInput.attributesManager.getSessionAttributes();
-
-                               console.log("List in call dynamo function "+ m)
-
-                               attributes.dynamoList = m;
-
-
-                               handlerInput.attributesManager.setSessionAttributes(attributes);
-
-
-           }} );
-
-    await sleep(3000);
-
-
-    const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
-    var attributes = handlerInput.attributesManager.getSessionAttributes();
-    var flag = 'false';
-    var list = attributes.dynamoList;
-    var rand_number = attributes.rand_number;
-    var rand_letter =  attributes.rand_letter;
-
-     for (var i = 0; i < list.length; i++) {
-           if (m[i] === rand_letter || m[i]=== rand_number.toString())
-             {
-             flag = 'true';
-             console.log("first flag set "+ flag)
-             //handlerInput.attributesManager.setSessionAttributes(attributes);
-           break;
-             }
-           else{
-            flag = 'false';
-           //handlerInput.attributesManager.setSessionAttributes(attributes);
-           continue
-           }
-                };
-    if (flag==='true'){
-         console.log("inside flag")
-         let congrats = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_positive_response_03"/> Good Job!!!';
+        for (var i = 0; i < list.length; i++) {
+            if (m[i] === rand_letter || m[i] === rand_number.toString()) {
+                flag = 'true';
+                console.log("first flag set " + flag)
+                //handlerInput.attributesManager.setSessionAttributes(attributes);
+                break;
+            }
+            else {
+                flag = 'false';
+                //handlerInput.attributesManager.setSessionAttributes(attributes);
+                continue
+            }
+        };
+        if (flag === 'true') {
+            console.log("inside flag")
+            let congrats = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_positive_response_03"/> Good Job!!!';
 
 
 
-                       return handlerInput.responseBuilder
-                           .speak(congrats)
-                           .addDelegateDirective({
-                                                                       name: 'SelectGame',
-                                                                       confirmationStatus: 'NONE',
-                                                                       slots: {}
-                                                                     })
-                                                                     .withShouldEndSession(false)
-                                                                     .reprompt('Say Play Again if you wish to continue')
-                           .getResponse();
-                           }
-    else{
-         let sorry = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_negative_response_01"/> Somethings wrong with me, Im sorry';
-         let tryAgain = "Let's try again"
+            return handlerInput.responseBuilder
+                .speak(congrats)
+                .addDelegateDirective({
+                    name: 'SelectGame',
+                    confirmationStatus: 'NONE',
+                    slots: {}
+                })
+                .withShouldEndSession(false)
+                .reprompt('Say Play Again if you wish to continue')
+                .getResponse();
+        }
+        else {
+            let sorry = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_negative_response_01"/> Somethings wrong with me, Im sorry';
+            let tryAgain = "Let's try again"
 
-                        return handlerInput.responseBuilder
-                            .speak(sorry)
-                            . reprompt(tryAgain)
-                            .addDelegateDirective({
-                                            name: 'SelectGame',
-                                            confirmationStatus: 'NONE',
-                                            slots: {}
-                                          })
-                                          .withShouldEndSession(false)
-                                          .reprompt('Say Play Again if you wish to continue')
-                            .getResponse();
+            return handlerInput.responseBuilder
+                .speak(sorry)
+                .reprompt(tryAgain)
+                .addDelegateDirective({
+                    name: 'SelectGame',
+                    confirmationStatus: 'NONE',
+                    slots: {}
+                })
+                .withShouldEndSession(false)
+                .reprompt('Say Play Again if you wish to continue')
+                .getResponse();
 
-         };
+        };
 
 
     }
@@ -365,7 +372,7 @@ const IntentReflectorHandler = {
     },
     handle(handlerInput) {
         const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
-        const speakOutput = handlerInput.t('REFLECTOR_MSG', {intentName: intentName});
+        const speakOutput = handlerInput.t('REFLECTOR_MSG', { intentName: intentName });
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
@@ -421,11 +428,11 @@ exports.handler = Alexa.SkillBuilders.custom()
         FallbackIntentHandler,
         SessionEndedRequestHandler,
         IntentReflectorHandler)
-    .addResponseInterceptors(function(requestEnvelope, response){
-    	console.log("\n" + "******************* REQUEST ENVELOPE **********************");
-    	console.log("\n" + JSON.stringify(requestEnvelope, null, 4));
-    	console.log("\n" + "******************* RESPONSE  **********************");
-    	console.log("\n" + JSON.stringify(response, null, 4));
+    .addResponseInterceptors(function (requestEnvelope, response) {
+        console.log("\n" + "******************* REQUEST ENVELOPE **********************");
+        console.log("\n" + JSON.stringify(requestEnvelope, null, 4));
+        console.log("\n" + "******************* RESPONSE  **********************");
+        console.log("\n" + JSON.stringify(response, null, 4));
     })
     .addRequestInterceptors(
         LocalisationRequestInterceptor)
