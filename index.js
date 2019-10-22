@@ -189,9 +189,9 @@ const SelectGameIntentHandler = {
                 console.log(array);
                 var l = [];
                 array.forEach(function (item, index) {
-                    item.forEach(function (d, i)
+                    item.texts.L.forEach(function (d, i)
                     {
-                        l.push(item.texts.L[i]);
+                        l.push(d);
                     })
                 });
 
