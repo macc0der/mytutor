@@ -63,28 +63,18 @@ dynamodb.query(params, function(err, data) {
                         array.forEach(function (item, index) {
                           l.push(item.texts.L[0]);
                                     });
-
             var filtered = l.filter(function (el) {
                             return el != null;
                           });
-
                         filtered.forEach(function (item, index) {
                                 //console.log("push output "+item.S)
                                 m.push(item.S)
-
                                 });
-
                     const requestAttributes = handler.attributesManager.getRequestAttributes();
                     var attributes = handler.attributesManager.getSessionAttributes();
-
                     console.log("List in call dynamo function "+ m)
-
                     attributes.dynamoList = m;
-
-
                     handler.attributesManager.setSessionAttributes(attributes);
-
-
 }} );
 }
 */
@@ -159,7 +149,7 @@ const SelectGameIntentHandler = {
         else if (gameType === 'alphabets') {
 
             const speakOutput = handlerInput.t('WELCOME_ALPHA');
-            var rand_letter = letter[Math.floor(Math.random() * letter.length)] + '.';
+            var rand_letter = letter[Math.floor(Math.random() * letter.length)];
             attributes.rand_letter = rand_letter
             const final_speech = speakOutput + ' ' + rand_letter + '<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
 
@@ -220,12 +210,14 @@ const SelectGameIntentHandler = {
 
                 resolve(m);
             }
-           
+
 
         })
-       
+
     }))
 };
+
+// TODO: Make sure the user gets the next question, when he answers the question correctly.
 
 const ReadyPlayIntentHandler = {
     canHandle(handlerInput) {
@@ -239,13 +231,13 @@ const ReadyPlayIntentHandler = {
         var attributes = handlerInput.attributesManager.getSessionAttributes();
         var flag = 'false';
         console.log(attributes);
-       
+
         console.log("results-->" + list);
-        var rand_number = attributes.rand_number;
-        var rand_letter = attributes.rand_letter;
+        var rand_number = attributes.rand_number ?attributes.rand_number: 11;
+        var rand_letter = (attributes.rand_letter?attributes.rand_letter:"set").toLowerCase();
 
         for (var i = 0; i < list.length; i++) {
-            if (m[i] === rand_letter || m[i] === rand_number.toString()) {
+            if (list[i].toLowerCase() === rand_letter || list[i] === rand_number.toString()) {
                 flag = 'true';
                 console.log("first flag set " + flag)
                 //handlerInput.attributesManager.setSessionAttributes(attributes);
@@ -261,33 +253,23 @@ const ReadyPlayIntentHandler = {
             console.log("inside flag")
             let congrats = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_positive_response_03"/> Good Job!!!';
 
-
+            //TODO:  Geneate the next question based on the gameType and add it to the congrats message. So, it would play the music, says Good job, and then says: Next Question, Show me the letter A. 
+            //Or if it is a numbers game, Show me the number 5.
 
             return handlerInput.responseBuilder
                 .speak(congrats)
-                .addDelegateDirective({
-                    name: 'SelectGame',
-                    confirmationStatus: 'NONE',
-                    slots: {}
-                })
                 .withShouldEndSession(false)
-                .reprompt('Say Play Again if you wish to continue')
+                .reprompt('You can say, I am ready or Start a new game.')
                 .getResponse();
         }
         else {
-            let sorry = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_negative_response_01"/> Somethings wrong with me, Im sorry';
+            let sorry = '<audio src="soundbank://soundlibrary/ui/gameshow/amzn_ui_sfx_gameshow_negative_response_01"/> You almost got it! Let us try again';
             let tryAgain = "Let's try again"
 
             return handlerInput.responseBuilder
-                .speak(sorry)
-                .reprompt(tryAgain)
-                .addDelegateDirective({
-                    name: 'SelectGame',
-                    confirmationStatus: 'NONE',
-                    slots: {}
-                })
+                .speak(sorry) 
                 .withShouldEndSession(false)
-                .reprompt('Say Play Again if you wish to continue')
+                .reprompt('You can say, I am ready or Start a new game.')
                 .getResponse();
 
         };
@@ -330,7 +312,7 @@ const CancelAndStopIntentHandler = {
 /* *
  * FallbackIntent triggers when a customer says something that doesn’t map to any intents in your skill
  * It must also be defined in the language model (if the locale supports it)
- * This handler can be safely added but will be ingnored in locales that do not support it yet 
+ * This handler can be safely added but will be ingnored in locales that do not support it yet
  * */
 const FallbackIntentHandler = {
     canHandle(handlerInput) {
@@ -347,9 +329,9 @@ const FallbackIntentHandler = {
     }
 };
 /* *
- * SessionEndedRequest notifies that a session was ended. This handler will be triggered when a currently open 
- * session is closed for one of the following reasons: 1) The user says "exit" or "quit". 2) The user does not 
- * respond or says something that does not match an intent defined in your voice model. 3) An error occurs 
+ * SessionEndedRequest notifies that a session was ended. This handler will be triggered when a currently open
+ * session is closed for one of the following reasons: 1) The user says "exit" or "quit". 2) The user does not
+ * respond or says something that does not match an intent defined in your voice model. 3) An error occurs
  * */
 const SessionEndedRequestHandler = {
     canHandle(handlerInput) {
@@ -363,8 +345,8 @@ const SessionEndedRequestHandler = {
 };
 /* *
  * The intent reflector is used for interaction model testing and debugging.
- * It will simply repeat the intent the user said. You can create custom handlers for your intents 
- * by defining them above, then also adding them to the request handler chain below 
+ * It will simply repeat the intent the user said. You can create custom handlers for your intents
+ * by defining them above, then also adding them to the request handler chain below
  * */
 const IntentReflectorHandler = {
     canHandle(handlerInput) {
@@ -383,7 +365,7 @@ const IntentReflectorHandler = {
 /**
  * Generic error handling to capture any syntax or routing errors. If you receive an error
  * stating the request handler chain is not found, you have not implemented a handler for
- * the intent being invoked or included it in the skill builder below 
+ * the intent being invoked or included it in the skill builder below
  * */
 
 /*
@@ -394,7 +376,6 @@ const ErrorHandler = {
     handle(handlerInput, error) {
         const speakOutput = handlerInput.t('ERROR_MSG');
         console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
-
         return handlerInput.responseBuilder
             .speak(speakOutput)
             .reprompt(speakOutput)
@@ -416,7 +397,7 @@ const LocalisationRequestInterceptor = {
 /**
  * This handler acts as the entry point for your skill, routing all request and response
  * payloads to the handlers above. Make sure any new handlers or interceptors you've
- * defined are included below. The order matters - they're processed top to bottom 
+ * defined are included below. The order matters - they're processed top to bottom
  * */
 exports.handler = Alexa.SkillBuilders.custom()
     .addRequestHandlers(
