@@ -131,7 +131,7 @@ const SelectGameIntentHandler = {
         if (gameType === 'numbers') {
 
             const speakOutput = handlerInput.t('WELCOME_NUMBER');
-            var rand_number = Math.floor(Math.random() * Math.floor(10));
+            var rand_number = Math.floor(Math.random() * Math.floor(5));
             const final_speech = speakOutput + " " + rand_number + '<audio src="soundbank://soundlibrary/voices/chorus/chorus_02"/>';
             const requestAttributes = handlerInput.attributesManager.getRequestAttributes();
             var attributes = handlerInput.attributesManager.getSessionAttributes();
@@ -258,6 +258,8 @@ const ReadyPlayIntentHandler = {
 
             //TODO:  Geneate the next question based on the gameType and add it to the congrats message. So, it would play the music, says Good job, and then says: Next Question, Show me the letter A. 
             //Or if it is a numbers game, Show me the number 5.
+            attributes["rand_number"]=-1;
+            attributes["rand_letter"] = "set";
 
             return handlerInput.responseBuilder
                 .speak(congrats)
